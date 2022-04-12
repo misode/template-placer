@@ -1,0 +1,25 @@
+{
+	"[javascript]": {
+		"editor.codeActionsOnSave": {
+			"source.fixAll": true,
+			"source.organizeImports": true
+		}
+	},
+	"[typescript]": {
+		"editor.codeActionsOnSave": {
+			"source.fixAll": true,
+			"source.organizeImports": true
+		}
+	},
+	"[typescriptreact]": {
+		"editor.codeActionsOnSave": {
+			"source.fixAll": true,
+			"source.organizeImports": true
+		}
+	},
+	"editor.insertSpaces": false,
+	"typescript.format.semicolons": "remove",
+	"files.associations": {
+		"*.css": "postcss"
+	}
+}
