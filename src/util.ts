@@ -54,12 +54,12 @@ export function decodeStructure(response: Response): Promise<Structure> {
 			const size = getListTag(root.value, 'size', 'int', 3) as [number, number, number]
 			return { name, size }
 		} catch (e: any) {
-			throw new Error(`Failed to decode structure ${response.url}: ${e.message}`)
+			throw new Error(`Failed to decode structure ${name}: ${e.message}`)
 		}
 	})
 }
 
-type Layout = { pool: string, name: string, pos: [number, number], size: [number, number, number] }[]
+export type Layout = { pool: string, name: string, pos: [number, number], size: [number, number, number] }[]
 
 export function generateLayout(pools: Record<string, string[]>, structures: Structure[]) {
 	const structureSizes = new Map(structures.map(s => [s.name, s.size]))

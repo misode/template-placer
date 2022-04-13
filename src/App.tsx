@@ -3,12 +3,13 @@ import { useCallback, useEffect, useRef, useState } from 'preact/hooks'
 import { Dropdown, InputGroup, Octicon, TreeView } from './components'
 import { Button } from './components/Button'
 import { getMcmetas, useMcmeta } from './hooks'
-import { collectStructures, decodeStructure, generateDatapack, generateLayout } from './util'
+import { collectStructures, decodeStructure, generateDatapack, generateLayout, Layout } from './util'
 
 export function App() {
 	const [version, setVersion] = useState<string | undefined>(undefined)
 	const [selected, setSelected] = useState<string[]>([])
 	const [status, setStatus] = useState<string | undefined>(undefined)
+	const [layout, setLayout] = useState<Layout | undefined>(undefined)
 	const [pack, setPack] = useState<string | undefined>(undefined)
 	const cancelToken = useRef<() => void>(() => {})
 
@@ -43,6 +44,7 @@ export function App() {
 
 	useEffect(() => {
 		setStatus(undefined)
+		setLayout(undefined)
 		setPack(undefined)
 		if (selected.length > 0) {
 			const run = async (token: CancellationToken) => {
@@ -54,6 +56,7 @@ export function App() {
 				const structures = await getMcmetas(structureIds.map(s => ['data', `data/minecraft/structures/${s}.nbt`]), { version, decode: decodeStructure })
 				const layout = generateLayout(poolStructures, structures)
 				if (token.isCancelled) return
+				setLayout(layout)
 				setStatus('Generating data pack...')
 				const pack = await generateDatapack(10, layout)
 				if (token.isCancelled) return
@@ -77,5 +80,19 @@ export function App() {
 		</div>
 		{(status && !pack) && <p class='text-zinc-500'>{status}</p>}
 		{pack && <Button href={pack} download='StructurePlacer.zip'>{Octicon.download} Download data pack</Button>}
+		{layout && <div class='max-w-full'>
+			<h3 class='text-xl' >Layout</h3>
+			<div class='flex flex-col items-start gap-2 max-w-full'>
+				{[...new Set(layout.map(s => s.pool))].map(pool =>
+					<div key={pool} class='border border-zinc-600 px-2 pb-1 max-w-full'>
+						<h4>{pool}</h4>
+						<div class='flex items-start gap-1 mt-1 overflow-x-auto max-w-full'>
+							{layout.filter(s => s.pool === pool).sort((a, b) => a.pos[0] - b.pos[0]).map(s =>
+								<div key={s.name} class='flex border border-zinc-400'
+									style={{ width: `${s.size[0] * 2}px`, height: `${s.size[2] * 2}px` }} />)}
+						</div>
+					</div>)}
+			</div>
+		</div>}
 	</main>
 }
