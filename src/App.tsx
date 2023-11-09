@@ -14,7 +14,7 @@ export function App() {
 	const [pack, setPack] = useState<string | undefined>(undefined)
 	const cancelToken = useRef<() => void>(() => {})
 
-	const versions = useMcmeta<{ id: string }[]>('summary', 'versions/data.min.json', { refresh: true })
+	const versions = useMcmeta<{ id: string, data_pack_version: number }[]>('summary', 'versions/data.min.json', { refresh: true })
 	const experiments = useMcmeta<string[]>('registries', 'datapack/data.min.json', { version })
 
 	const vanillaPools = useMcmeta<string[]>('registries', 'worldgen/template_pool/data.min.json', { version })
@@ -35,6 +35,10 @@ export function App() {
 			setVersion(versions[0].id)
 		}
 	}, [versions])
+
+	const packFormat = useMemo(() => {
+		return versions?.find(v => v.id === version)?.data_pack_version
+	}, [versions, version])
 
 	const select = useCallback((entry: string) => {
 		if (pools?.includes(entry)) {
@@ -75,7 +79,7 @@ export function App() {
 				if (token.isCancelled) return
 				setLayout(layout)
 				setStatus('Generating data pack...')
-				const pack = await generateDatapack(10, layout)
+				const pack = await generateDatapack(packFormat ?? 10, layout)
 				if (token.isCancelled) return
 				setStatus(undefined)
 				setPack(pack)
@@ -85,7 +89,7 @@ export function App() {
 			cancelToken.current = cancel
 			run(token)
 		}
-	}, [version, selected, experimentPools, experiments])
+	}, [version, packFormat, selected, experimentPools, experiments])
 
 	return <main class='flex flex-col items-start gap-4 p-4 accent-teal-600'>
 		<div class="flex gap-5">
