@@ -5,8 +5,8 @@ interface Props {
 	children: ComponentChildren
 }
 export function InputGroup({ label, children }: Props) {
-	return <div class='flex items-center'>
-		<label class='mr-3 text-xl'>{label}</label>
+	return <div class='flex items-center gap-2'>
+		<label class='text-xl'>{label}</label>
 		{children}
 	</div>
 }

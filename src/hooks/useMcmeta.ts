@@ -24,7 +24,11 @@ export function useMcmeta<D>(type: Types, path: string, options: McmetaOptions<D
 	return data
 }
 
-export function useMcmetas<D>(requests: [Types, string][], options: McmetaOptions<D> = {}) {
+interface McmetasOptions<D> extends McmetaOptions<D> {
+	fallback?: D
+}
+
+export function useMcmetas<D>(requests: [Types, string][], options: McmetasOptions<D> = {}) {
 	const [data, setData] = useState<D[] | undefined>(undefined)
 	useEffect(() => {
 		setData(undefined)
@@ -33,13 +37,13 @@ export function useMcmetas<D>(requests: [Types, string][], options: McmetaOption
 	return data
 }
 
-export async function getMcmetas<D>(requests: [Types, string][], options: McmetaOptions<D> = {}) {
+export async function getMcmetas<D>(requests: [Types, string][], options: McmetasOptions<D> = {}) {
 	const urls = requests.map(([type, path]) => {
 		const ref = options.version ? `${options.version}-${type}` : type
 		return `${MCMETA}/${ref}/${path}`
 	})
 	const results = await Promise.allSettled(urls.map(url => cachedFetch(url, options)))
-	const data = results.flatMap(r => r.status === 'fulfilled' ? [r.value] : [])
+	const data = results.flatMap(r => r.status === 'fulfilled' ? [r.value] : options.fallback !== undefined ? [options.fallback] : [])
 	return data
 }
 
