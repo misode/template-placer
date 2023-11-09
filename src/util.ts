@@ -11,7 +11,7 @@ export async function computeIfAbsent<K, V>(map: Map<K, V>, key: K, getter: (key
 	return value
 }
 
-export function collectStructures(pools?: any[]): Record<string, string[]> {
+export function collectStructures(keys: string[], pools: any[]): Record<string, string[]> {
 	if (!pools) return {}
 	const getStructures = (element: any) => {
 		const type = element?.element_type?.replace(/^minecraft:/, '')
@@ -24,10 +24,10 @@ export function collectStructures(pools?: any[]): Record<string, string[]> {
 		}
 		return []
 	}
-	return Object.fromEntries(pools.flatMap(pool => {
+	return Object.fromEntries(pools.flatMap((pool, i) => {
 		const structures = pool.elements.flatMap((e: any) => getStructures(e.element))
 		if (structures.length === 0) return []
-		return [[pool.name.replace(/^minecraft:/, ''), structures]]
+		return [[keys[i], structures]]
 	}))
 }
 

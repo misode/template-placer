@@ -51,7 +51,7 @@ export function App() {
 				setStatus('Computing layout...')
 				const selectedPools = await getMcmetas(selected.map(s => ['data', `data/minecraft/worldgen/template_pool/${s}.json`]), { version })
 				if (token.isCancelled) return
-				const poolStructures = collectStructures(selectedPools)
+				const poolStructures = collectStructures(selected, selectedPools)
 				const structureIds = [...new Set(Object.values(poolStructures).flat())]
 				const structures = await getMcmetas(structureIds.map(s => ['data', `data/minecraft/structures/${s}.nbt`]), { version, decode: decodeStructure })
 				const layout = generateLayout(poolStructures, structures)
