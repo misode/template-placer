@@ -96,8 +96,8 @@ export function App() {
 			<InputGroup label='Version'>
 				<Dropdown value={version} onChange={setVersion} options={versions?.map(v => v.id)} />
 			</InputGroup>
-			<label class="flex items-center gap-2">
-				<input type="checkbox" checked={experimental} />
+			<label class="flex items-center gap-2" >
+				<input type="checkbox" checked={experimental} onClick={() => setExperimental(!experimental)} />
 				Include experimental
 			</label>
 		</div>
