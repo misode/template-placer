@@ -67,8 +67,8 @@ export function App() {
 			const run = async (token: CancellationToken) => {
 				setStatus('Computing layout...')
 				const selectedPools = await getMcmetas(selected.map(s => {
-					const expIndex = experimentPools?.findIndex(p => p?.includes(s))
-					const experiment = expIndex === undefined ? '' : `datapacks/${experiments?.[expIndex]}/data/minecraft/`
+					const expIndex = experimentPools?.findIndex(p => p?.includes(s)) ?? -1
+					const experiment = expIndex === -1 ? '' : `datapacks/${experiments?.[expIndex]}/data/minecraft/`
 					return ['data', `data/minecraft/${experiment}worldgen/template_pool/${s}.json`]
 				}), { version })
 				if (token.isCancelled) return
@@ -92,12 +92,12 @@ export function App() {
 	}, [version, packFormat, selected, experimentPools, experiments])
 
 	return <main class='flex flex-col items-start gap-4 p-4 accent-teal-600'>
-		<div class="flex gap-5">
+		<div class='flex gap-5'>
 			<InputGroup label='Version'>
 				<Dropdown value={version} onChange={setVersion} options={versions?.map(v => v.id)} />
 			</InputGroup>
-			<label class="flex items-center gap-2" >
-				<input type="checkbox" checked={experimental} onClick={() => setExperimental(!experimental)} />
+			<label class='flex items-center gap-2' >
+				<input type='checkbox' checked={experimental} onClick={() => setExperimental(!experimental)} />
 				Include experimental
 			</label>
 		</div>
