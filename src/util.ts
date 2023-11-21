@@ -27,7 +27,7 @@ export function collectStructures(keys: string[], pools: any[]): Record<string, 
 	return Object.fromEntries(pools.flatMap((pool, i) => {
 		const structures = pool.elements.flatMap((e: any) => getStructures(e.element))
 		if (structures.length === 0) return []
-		return [[keys[i], structures]]
+		return [[keys[i], [...new Set<string>(structures)]]]
 	}))
 }
 
@@ -115,13 +115,13 @@ export async function generateDatapack(packFormat: number, layout: Layout) {
 	])
 	await addFile('data/structure_placer/functions/forceload_add.mcfunction', [
 		...layout.flatMap(({ pos }) => [
-			`execute at @e[type=marker,tag=structure_placer_origin] run forceload add ~${pos[0]} ~${pos[1]}`
-		])
+			`execute at @e[type=marker,tag=structure_placer_origin] run forceload add ~${pos[0]} ~${pos[1]}`,
+		]),
 	])
 	await addFile('data/structure_placer/functions/forceload_remove.mcfunction', [
 		...layout.flatMap(({ pos }) => [
-			`execute at @e[type=marker,tag=structure_placer_origin] run forceload remove ~${pos[0]} ~${pos[1]}`
-		])
+			`execute at @e[type=marker,tag=structure_placer_origin] run forceload remove ~${pos[0]} ~${pos[1]}`,
+		]),
 	])
 	await addFile('data/structure_placer/functions/place.mcfunction', [
 		'tellraw @a [{"text": "Placing structures... (this can take a while)", "color": "dark_aqua"}]',
@@ -132,7 +132,7 @@ export async function generateDatapack(packFormat: number, layout: Layout) {
 	await addFile('data/structure_placer/functions/check_loaded.mcfunction', [
 		'scoreboard players set $loaded structure_placer 1',
 		...layout.flatMap(({ pos }) => [
-			`execute at @e[type=marker,tag=structure_placer_origin] unless loaded ~${pos[0]} 0 ~${pos[1]} run scoreboard players set $loaded structure_placer 0`
+			`execute at @e[type=marker,tag=structure_placer_origin] unless loaded ~${pos[0]} 0 ~${pos[1]} run scoreboard players set $loaded structure_placer 0`,
 		]),
 		'execute if score $loaded structure_placer matches 0 run schedule function structure_placer:check_loaded 5t',
 		'execute if score $loaded structure_placer matches 1 run function structure_placer:place_prepare',
