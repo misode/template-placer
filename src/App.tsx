@@ -37,7 +37,7 @@ export function App() {
 	}, [versions])
 
 	const packFormat = useMemo(() => {
-		return versions?.find(v => v.id === version)?.data_pack_version
+		return versions?.find(v => v.id === version)?.data_pack_version ?? 48
 	}, [versions, version])
 
 	const select = useCallback((entry: string) => {
@@ -74,12 +74,13 @@ export function App() {
 				if (token.isCancelled) return
 				const poolStructures = collectStructures(selected, selectedPools)
 				const structureIds = [...new Set(Object.values(poolStructures).flat())]
-				const structures = await getMcmetas(structureIds.map(s => ['data', `data/minecraft/structures/${s}.nbt`]), { version, decode: decodeStructure })
+				const structures = await getMcmetas(structureIds.map(s => ['data', `data/minecraft/${packFormat >= 45 ? 'structure' : 'structures'}/${s}.nbt`]), { version, decode: (r) => decodeStructure(packFormat, r) })
+				console.log(`data/minecraft/${packFormat >= 45 ? 'structure' : 'structures'}/....nbt`)
 				const layout = generateLayout(poolStructures, structures)
 				if (token.isCancelled) return
 				setLayout(layout)
 				setStatus('Generating data pack...')
-				const pack = await generateDatapack(packFormat ?? 10, layout)
+				const pack = await generateDatapack(packFormat, layout)
 				if (token.isCancelled) return
 				setStatus(undefined)
 				setPack(pack)

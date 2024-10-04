@@ -38,9 +38,10 @@ export interface Structure {
 
 const StructureCache = new Map<string, Structure>()
 
-export function decodeStructure(response: Response): Promise<Structure> {
+export function decodeStructure(packFormat: number, response: Response): Promise<Structure> {
 	return computeIfAbsent(StructureCache, response.url, async () => {
-		const urlMatch = response.url.match(/minecraft\/structures\/([a-z0-9/_]+).nbt$/)
+		const pattern = packFormat >= 45 ? /minecraft\/structure\/([a-z0-9/_]+).nbt$/ : /minecraft\/structures\/([a-z0-9/_]+).nbt$/
+		const urlMatch = response.url.match(pattern)
 		if (urlMatch === null) {
 			throw new Error(`Cannot find structure name in url ${response.url}`)
 		}
@@ -91,45 +92,47 @@ export async function generateDatapack(packFormat: number, layout: Layout) {
 			: new TextReader(JSON.stringify(content, null, 2))
 		await zip.add(name, reader)
 	}
+	const functionTags = packFormat >= 43 ? 'tags/function' : 'tags/function'
+	const functions = packFormat >= 45 ? 'function' : 'functions'
 	await addFile('pack.mcmeta', { pack: { pack_format: packFormat, description: '' } })
-	await addFile('data/minecraft/tags/functions/load.json', { values: ['structure_placer:load'] })
-	await addFile('data/structure_placer/functions/load.mcfunction', [
+	await addFile(`data/minecraft/${functionTags}/load.json`, { values: ['structure_placer:load'] })
+	await addFile(`data/structure_placer/${functions}/load.mcfunction`, [
 		'scoreboard objectives add structure_placer dummy',
 		'execute unless score $bounding_boxes structure_placer matches 0.. run scoreboard players set $bounding_boxes structure_placer 1',
 		'',
 		'function structure_placer:load_wait',
 	])
-	await addFile('data/structure_placer/functions/load_wait.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/load_wait.mcfunction`, [
 		'execute if entity @a[limit=1] run function structure_placer:load_finish',
 		'execute unless entity @a[limit=1] run schedule function structure_placer:load 1t',
 	])
-	await addFile('data/structure_placer/functions/load_finish.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/load_finish.mcfunction`, [
 		'function structure_placer:show_menu',
 	])
-	await addFile('data/structure_placer/functions/show_menu.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/show_menu.mcfunction`, [
 		'tellraw @a [{"text": "[Place Structures] ", "color": "aqua", "clickEvent": {"action": "run_command", "value": "/function structure_placer:place"} }, {"text": "[Toggle bounding boxes]", "color": "gold", "clickEvent": {"action": "run_command", "value": "/function structure_placer:toggle_bounding_boxes"} }]',
 	])
-	await addFile('data/structure_placer/functions/toggle_bounding_boxes.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/toggle_bounding_boxes.mcfunction`, [
 		'execute store success score $bounding_boxes structure_placer if score $bounding_boxes structure_placer matches 0',
 		'execute at @e[type=area_effect_cloud,tag=structure_placer] store result block ~ ~-1 ~ showboundingbox byte 1 run scoreboard players get $bounding_boxes structure_placer',
 	])
-	await addFile('data/structure_placer/functions/forceload_add.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/forceload_add.mcfunction`, [
 		...layout.flatMap(({ pos }) => [
 			`execute at @e[type=marker,tag=structure_placer_origin] run forceload add ~${pos[0]} ~${pos[1]}`,
 		]),
 	])
-	await addFile('data/structure_placer/functions/forceload_remove.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/forceload_remove.mcfunction`, [
 		...layout.flatMap(({ pos }) => [
 			`execute at @e[type=marker,tag=structure_placer_origin] run forceload remove ~${pos[0]} ~${pos[1]}`,
 		]),
 	])
-	await addFile('data/structure_placer/functions/place.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/place.mcfunction`, [
 		'tellraw @a [{"text": "Placing structures... (this can take a while)", "color": "dark_aqua"}]',
 		'summon marker ~ ~ ~ {Tags:["structure_placer_origin"]}',
 		'function structure_placer:forceload_add',
 		'schedule function structure_placer:check_loaded 1t',
 	])
-	await addFile('data/structure_placer/functions/check_loaded.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/check_loaded.mcfunction`, [
 		'scoreboard players set $loaded structure_placer 1',
 		...layout.flatMap(({ pos }) => [
 			`execute at @e[type=marker,tag=structure_placer_origin] unless loaded ~${pos[0]} 0 ~${pos[1]} run scoreboard players set $loaded structure_placer 0`,
@@ -137,7 +140,7 @@ export async function generateDatapack(packFormat: number, layout: Layout) {
 		'execute if score $loaded structure_placer matches 0 run schedule function structure_placer:check_loaded 5t',
 		'execute if score $loaded structure_placer matches 1 run function structure_placer:place_prepare',
 	])
-	await addFile('data/structure_placer/functions/place_prepare.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/place_prepare.mcfunction`, [
 		'schedule function structure_placer:place_finish 1t',
 		...layout.flatMap(({ name, pos }) => [
 			`setblock ~${pos[0]} ~ ~${pos[1]} structure_block[mode=load]{mode:"LOAD",name:"minecraft:${name}",showboundingbox:1b,posX:1}`,
@@ -145,7 +148,7 @@ export async function generateDatapack(packFormat: number, layout: Layout) {
 		]),
 		'execute at @e[type=area_effect_cloud,tag=structure_placer] store result block ~ ~-1 ~ showboundingbox byte 1 run scoreboard players get $bounding_boxes structure_placer',
 	])
-	await addFile('data/structure_placer/functions/place_finish.mcfunction', [
+	await addFile(`data/structure_placer/${functions}/place_finish.mcfunction`, [
 		'execute at @e[type=area_effect_cloud,tag=structure_placer] run setblock ~ ~-2 ~ redstone_block',
 		'schedule function structure_placer:forceload_remove 1t',
 	])
